@@ -2,10 +2,14 @@ import pickle as pkl
 from FeatureExtraction import FeatureExtraction
 import numpy as np
 import heapq
+from rtree import index
+import os
+from tqdm import tqdm
 
 
 class SpatialSearch:
-    def __init__(self, feature_path: str):
+    def __init__(self, feature_path: str, r_tree_path: str):
+        # Carga las características desde el archivo pickle
         with open(feature_path, 'rb') as f:
             features = pkl.load(f)
 
@@ -16,34 +20,45 @@ class SpatialSearch:
             self.path_files.append(key)
             self.vector_features.append(value)
 
-    def knnSearch(self, query, k):
-        feature = self.FV.extract_features([query])[query]
-
-        # Usar un heap para mantener los k vecinos más cercanos
+    def knn_sequential(self, query, k):
+        feature = self.FV.extract_one_feature(query)
         heap = []
 
         for idx, vector in enumerate(self.vector_features):
-            # Calcular la distancia (por ejemplo, distancia euclidiana)
             distance = np.linalg.norm(vector - feature)
-
-            # Si el heap tiene menos de k elementos, añadir la nueva distancia
             if len(heap) < k:
-                heapq.heappush(heap, (distance, self.path_files[idx]))
+                heapq.heappush(heap, (-distance, self.path_files[idx]))
             else:
-                # Si el heap ya tiene k elementos, reemplazar el más lejano si el actual es más cercano
-                heapq.heappushpop(heap, (distance, self.path_files[idx]))
+                heapq.heappushpop(heap, (-distance, self.path_files[idx]))
 
-        # Ordenar el heap por distancia
-        nearest_neighbors = sorted(heap, key=lambda x: x[0])
+        nearest_neighbors = sorted(heap, key=lambda x: x[0], reverse=True)
+        return [(path, -dist) for dist, path in nearest_neighbors]
 
-        # Devolver solo los k vecinos más cercanos
-        return [(path, dist) for dist, path in nearest_neighbors]
+    def range_search(self, query, radius):
+        feature = self.FV.extract_one_feature(query)
+        results = []
+
+        for idx, vector in enumerate(self.vector_features):
+            distance = np.linalg.norm(vector - feature)
+            if distance <= radius:
+                results.append((self.path_files[idx], distance))
+
+        results = sorted(results, key=lambda x: x[1])
+        return results
 
 
 if __name__ == '__main__':
-    search = SpatialSearch('features/features.pkl')
-    res = search.knnSearch('persona.jpg', 5)
+    # Inicializa la búsqueda espacial con el archivo de características guardado
+    search = SpatialSearch('features/features.pkl', 'features/rtree.idx')
 
-    print("Resultados de la búsqueda:")
+    res = search.knn_sequential('images/9964.jpg', 10)
+
+    print("Resultados de la búsqueda secuencial:")
+    for r in res:
+        print(r)
+
+    res = search.range_search('images/9964.jpg', 0.3)
+
+    print("Resultados de la búsqueda por rango:")
     for r in res:
         print(r)
