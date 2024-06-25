@@ -1,7 +1,7 @@
 import tensorflow as tf
-from tensorflow.keras.applications import InceptionV3
-from tensorflow.keras.preprocessing import image
-from tensorflow.keras.applications.inception_v3 import preprocess_input
+from tensorflow.keras.applications import InceptionV3  # type: ignore
+from tensorflow.keras.preprocessing import image  # type: ignore
+from tensorflow.keras.applications.inception_v3 import preprocess_input  # type: ignore
 import numpy as np
 import pickle as pkl
 from tqdm import tqdm
