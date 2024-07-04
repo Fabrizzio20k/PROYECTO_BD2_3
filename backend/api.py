@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from models.SpatialSearch import SpatialSearch
 import time
@@ -21,7 +21,6 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -38,19 +37,19 @@ def create_index():
     if spatial is None:
         spatial = SpatialSearch('features/features.pkl',
                                 'features/rtree', 'features/faiss.index')
-        return {"message": "index created", "status": 200}
+        return {"message": "Index created successfully", "status_code": 200}
     else:
-        return {"message": "index already exists", "status": 400}
+        return HTTPException(status_code=400, detail="Index already created")
 
 
 @app.post("/search")
 async def upload_file(image: UploadFile = File(...), type_search: str = Form(...), k: float = Form(...)):
 
     if spatial is None:
-        return {"message": "index not created", "status": 400}
+        return HTTPException(status_code=400, detail="Index not created")
 
     if image.content_type != "image/jpeg" and image.content_type != "image/png" and image.content_type != "image/jpg" and image.content_type != "image/webp":
-        return {"message": "invalid file type", "status": 400}
+        return HTTPException(status_code=400, detail="Invalid image format")
 
     file_location = os.path.join(TEMPORARY_FOLDER, image.filename)
     with open(file_location, "wb") as f:
@@ -66,7 +65,7 @@ async def upload_file(image: UploadFile = File(...), type_search: str = Form(...
     elif type_search == "faiss":
         res = spatial.faiss_knn_search(file_location, int(k))
     else:
-        return {"message": "invalid search type", "status": 400}
+        return HTTPException(status_code=400, detail="Invalid search type")
 
     end = time.time()
 
@@ -82,4 +81,4 @@ async def upload_file(image: UploadFile = File(...), type_search: str = Form(...
         results.append(
             {"image": encoded_string, "distance": float(distance_value)})
 
-    return {"message": "search completed", "status": 200, "time": end-start, "results": results}
+    return {"message": "Search completed successfully", "status_code": 200, "time": end-start, "results": results}
