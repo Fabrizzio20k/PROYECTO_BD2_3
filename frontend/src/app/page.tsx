@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { useForm, Controller, set } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import Loader from "@/components/Loader";
 import Message from "@/components/Message";
 import Image from 'next/image';
 import axios from 'axios';
 
-const APIURL = 'http://127.0.0.1:8000';
+const APIURL = 'http://100.29.129.179:8000';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
