@@ -186,7 +186,7 @@ export default function Home() {
           {results == -1 && (
             <p className="text-white text-center p-4">No hay resultados aún. Prueba a subir una foto y hacer una consulta primero 🦎</p>
           )}
-          <div className="flex flex-wrap justify-center">
+          <div className="flex flex-wrap justify-center mt-4">
             {imageResults.map((result, index) => (
               <div key={index} className="flex flex-col items-center m-2">
                 <Image
