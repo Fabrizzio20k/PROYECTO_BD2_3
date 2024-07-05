@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Image search Simulator",
   description: "Simulador de búsqueda de imágenes",
+  icons: [
+    "./icon.ico"
+  ]
 };
 
 export default function RootLayout({
@@ -13,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body className="bg-midnight-950">{children}</body>
     </html>
   );
 }

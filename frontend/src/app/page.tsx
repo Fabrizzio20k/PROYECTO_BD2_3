@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, set } from 'react-hook-form';
 import Loader from "@/components/Loader";
 import Message from "@/components/Message";
 import Image from 'next/image';
@@ -16,8 +16,10 @@ export default function Home() {
   const [hovered, setHovered] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string>('Hello, world!');
+  const [message, setMessage] = useState<string>('Loading, please wait...');
   const [typeResults, setTypeResults] = useState<string>('default');
+  const [results, setResults] = useState<number>(-1);
+  const [imageResults, setImageResults] = useState<Array<any>>([]);
 
   const { handleSubmit, control, watch, formState: { errors } } = useForm({
     defaultValues: {
@@ -41,19 +43,35 @@ export default function Home() {
 
   const watchTypeSearch = watch('typeSearch');
 
-  const onSubmit = (data: any) => {
+  const onSubmit = async (data: any) => {
     if (!file) {
       setFileError('Please select an image');
       return;
     }
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('type_search', data.typeSearch);
+    formData.append('k', data.value);
 
-    const formData = {
-      photo: file,
-      k: data.value,
-      type_search: data.typeSearch,
-    };
+    setLoading(true);
 
-    console.log(formData);
+    try {
+      const { data } = await axios.post(`${APIURL}/search`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      setMessage(data.message + " Time: " + (data.time as number).toFixed(5) + " seconds");
+      setTypeResults('success');
+      setImageResults(data.results);
+      setResults(data.results.length);
+    } catch (error) {
+      setMessage((error as any).response.data.detail);
+      setTypeResults('error');
+    }
+    finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -78,7 +96,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="bg-midnight-950 w-full h-screen flex justify-center">
+    <main className="w-full h-screen flex justify-center">
       <Loader isActive={loading} />
       <section className="flex flex-col items-center max-w-[1920px] w-full px-10">
         <Message message={message} type={typeResults as "default" | "error" | "success" | "info" | "warning"} />
@@ -139,7 +157,7 @@ export default function Home() {
                   <Controller
                     name="value"
                     control={control}
-                    rules={{ required: 'Please enter a value' }}
+                    rules={{ required: 'Please enter a value', min: { value: 0.00000000000001, message: 'The value must be greater than 0' } }}
                     render={({ field }) => (
                       <input
                         {...field}
@@ -159,6 +177,28 @@ export default function Home() {
                 Attach file
               </button>
             </form>
+          </div>
+        </article>
+        <article className='w-full flex flex-col mt-4'>
+          <h2 className="text-white text-2xl font-bold">
+            {results > -1 ? `${results} ${results == 1 ? "resultado encontrado" : "resultados encontrados"}` : ""}
+          </h2>
+          {results == -1 && (
+            <p className="text-white text-center p-4">No hay resultados aún. Prueba a subir una foto y hacer una consulta primero 🦎</p>
+          )}
+          <div className="flex flex-wrap justify-center">
+            {imageResults.map((result, index) => (
+              <div key={index} className="flex flex-col items-center m-2">
+                <Image
+                  src={`data:image/jpeg;base64,${result.image}`}
+                  alt={`Result ${index + 1}`}
+                  width={256}
+                  height={256}
+                  className="object-cover rounded-lg"
+                />
+                <p className="text-white mt-2">Distance: {result.distance}</p>
+              </div>
+            ))}
           </div>
         </article>
       </section>
