@@ -13,14 +13,9 @@ TEMPORARY_FOLDER = "temp/"
 if not os.path.exists(TEMPORARY_FOLDER):
     os.makedirs(TEMPORARY_FOLDER)
 
-origins = [
-    "http://localhost:3000",
-    "http://localhost",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

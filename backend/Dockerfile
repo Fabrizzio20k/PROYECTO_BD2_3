@@ -18,5 +18,5 @@ RUN rm -rf features images venv
 EXPOSE 8000
 
 # Comando para ejecutar la aplicación con uvicorn
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-keep-alive", "120"]
 
