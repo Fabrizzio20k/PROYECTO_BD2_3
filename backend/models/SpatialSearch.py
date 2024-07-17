@@ -87,18 +87,17 @@ class SpatialSearch:
     def rtree_knn_search(self, query, k):
         feature = self.FV.extract_one_feature(query)
         feature = self.__pca.transform([feature])[0]
-        heap = []
 
-        for idx in self.__idx.nearest(feature, num_results=k):
-            distance = np.linalg.norm(
-                self.__rtree_vector_features[idx] - feature)
-            if len(heap) < k:
-                heapq.heappush(heap, (-distance, self.path_files[idx]))
-            else:
-                heapq.heappushpop(heap, (-distance, self.path_files[idx]))
+        k_nearest = list(self.__idx.nearest(feature, num_results=k))
 
-        nearest_neighbors = sorted(heap, key=lambda x: x[0], reverse=True)
-        return [(path, -dist) for dist, path in nearest_neighbors]
+        results = []
+        for idx in k_nearest:
+            distance = np.linalg.norm(self.__rtree_vector_features[idx] - feature)
+            results.append((distance, self.path_files[idx]))
+
+        results.sort(key=lambda x: x[0])
+
+        return [(path, dist) for dist, path in results]
 
     def faiss_knn_search(self, query, k):
 
