@@ -84,28 +84,6 @@ class SpatialSearch:
         results = sorted(results, key=lambda x: x[1])
         return results
     
-    def range_search_tree(self , query , radius):
-        feature = self.FV.extract_one_feature(query) #featurevector of query
-        feature  = self.__pca.transform([feature])[0]
-
-        search_range = []
-
-        for dim in feature:
-            search_range.append(dim -radius)
-            search_range.append(dim + radius)
-
-        search_range = tuple(search_range)
-
-        intersect_points = list(self.__idx.intersection(search_range))
-
-        results = []
-
-        for idx in intersect_points:
-            distance = np.linalg.norm(self.__rtree_vector_features[idx] - feature)
-            if distance <= radius:
-                results.append((self.path_files[idx] , distance))
-
-        return results
     
 
 
@@ -126,7 +104,6 @@ class SpatialSearch:
         return [(path, dist) for dist, path in results]
 
     def faiss_knn_search(self, query, k):
-
         feature = self.FV.extract_one_feature(query)
         distances, indices = self.__faiss_index.search(np.array([feature]), k)
         return [(self.path_files[idx], dist) for dist, idx in zip(distances[0], indices[0])]
